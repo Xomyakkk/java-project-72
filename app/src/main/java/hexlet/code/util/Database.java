@@ -7,6 +7,8 @@ import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -14,6 +16,7 @@ import com.zaxxer.hikari.HikariDataSource;
 public final class Database {
     private static final String DEFAULT_H2_URL =
             "jdbc:h2:mem:_project_;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1";
+    private static final Pattern ENV_PATTERN = Pattern.compile("\\$\\{([A-Z0-9_]+)\\}");
     private static final HikariDataSource DATA_SOURCE = createDataSource();
 
     private Database() {
@@ -54,6 +57,9 @@ public final class Database {
             return new ConnectionSettings(DEFAULT_H2_URL, "sa", "");
         }
 
+        url = expandEnvVariables(url);
+        url = stripQuotes(url);
+
         if (url.startsWith("jdbc:")) {
             return new ConnectionSettings(url, null, null);
         }
@@ -63,6 +69,32 @@ public final class Database {
         }
 
         return new ConnectionSettings(url, null, null);
+    }
+
+    private static String expandEnvVariables(String value) {
+        var matcher = ENV_PATTERN.matcher(value);
+        var buffer = new StringBuffer();
+
+        while (matcher.find()) {
+            var envValue = System.getenv(matcher.group(1));
+            if (envValue == null) {
+                envValue = "";
+            }
+            matcher.appendReplacement(buffer, Matcher.quoteReplacement(envValue));
+        }
+
+        matcher.appendTail(buffer);
+        return buffer.toString();
+    }
+
+    private static String stripQuotes(String value) {
+        if (value.length() >= 2
+                && ((value.startsWith("\"") && value.endsWith("\""))
+                || (value.startsWith("'") && value.endsWith("'")))) {
+            return value.substring(1, value.length() - 1);
+        }
+
+        return value;
     }
 
     private static ConnectionSettings parsePostgresUrl(String url) {
