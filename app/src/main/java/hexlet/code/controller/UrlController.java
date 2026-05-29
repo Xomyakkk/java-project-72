@@ -91,7 +91,7 @@ public class UrlController {
     }
 
     private String consumeFlash(Context ctx) {
-        var flash = ctx.sessionAttribute(FLASH_KEY);
+        String flash = ctx.sessionAttribute(FLASH_KEY);
         if (flash != null) {
             ctx.sessionAttribute(FLASH_KEY, (String) null);
         }

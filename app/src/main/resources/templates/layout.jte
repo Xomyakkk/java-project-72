@@ -1,7 +1,7 @@
 @import gg.jte.Content
 
 @param Content content
-@param Content flash = null
+@param String flash = null
 @param Content footer = null
 
 <!doctype html>
@@ -24,7 +24,7 @@
 
 <main class="container flex-grow-1 py-5">
     @if (flash != null)
-        <div class="mb-4">
+        <div class="alert alert-info mb-4" role="alert">
             ${flash}
         </div>
     @endif
