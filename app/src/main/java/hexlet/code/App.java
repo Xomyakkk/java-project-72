@@ -1,6 +1,8 @@
 package hexlet.code;
 
 import hexlet.code.util.Database;
+import hexlet.code.controller.UrlController;
+import hexlet.code.repository.UrlRepository;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
@@ -10,17 +12,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
+import static io.javalin.apibuilder.ApiBuilder.post;
 
 public class App {
     private static final int DEFAULT_PORT = 7070;
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     public static Javalin getApp() {
+        var urlRepository = new UrlRepository();
+        var urlController = new UrlController(urlRepository);
         return Javalin.create(config -> {
             config.bundledPlugins.enableDevLogging();
             config.fileRenderer(new JavalinJte(createTemplateEngine()));
             config.routes.apiBuilder(() -> {
-                get("/", ctx -> ctx.render("index.jte"));
+                get("/", urlController::home);
+                get("/urls", urlController::index);
+                post("/urls", urlController::create);
+                get("/urls/{id}", urlController::show);
             });
         });
     }
