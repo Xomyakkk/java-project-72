@@ -1,5 +1,6 @@
 package hexlet.code;
 
+import hexlet.code.util.Database;
 import io.javalin.Javalin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +22,7 @@ public class App {
 
     public static void main(String[] args) {
         var port = getPort();
+        Database.getDataSource();
         var app = getApp();
         LOGGER.info("Starting application on port {}", port);
         app.start(port);

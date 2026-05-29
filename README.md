@@ -11,3 +11,6 @@
 [![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=Xomyakkk_java-project-72&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=Xomyakkk_java-project-72)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Xomyakkk_java-project-72&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Xomyakkk_java-project-72)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=Xomyakkk_java-project-72&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=Xomyakkk_java-project-72)
+
+
+Проект https://java-project-72-vkt0.onrender.com
