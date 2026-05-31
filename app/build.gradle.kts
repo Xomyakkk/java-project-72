@@ -1,7 +1,7 @@
 plugins {
     id("java")
-    id("com.gradleup.shadow") version "9.4.1"
-    id("org.sonarqube") version "7.3.0.8198"
+    alias(libs.plugins.shadow)
+    alias(libs.plugins.sonarqube)
     application
     checkstyle
     jacoco
@@ -19,20 +19,20 @@ repositories {
 }
 
 dependencies {
-    implementation("io.javalin:javalin:7.2.2")
-    implementation("io.javalin:javalin-rendering-jte:7.2.2")
-    implementation("gg.jte:jte:3.2.4")
-    implementation("com.zaxxer:HikariCP:5.1.0")
-    implementation("com.h2database:h2:2.3.232")
-    implementation("org.postgresql:postgresql:42.7.5")
-    implementation("com.konghq:unirest-java-core:4.5.1")
-    implementation("org.jsoup:jsoup:1.18.3")
-    implementation("org.slf4j:slf4j-simple:2.0.18")
-    testImplementation(platform("org.junit:junit-bom:6.0.0"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("io.javalin:javalin-testtools:7.2.2")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation(libs.javalin)
+    implementation(libs.javalin.rendering.jte)
+    implementation(libs.jte)
+    implementation(libs.hikari)
+    implementation(libs.h2)
+    implementation(libs.postgresql)
+    implementation(libs.unirest.core)
+    implementation(libs.jsoup)
+    implementation(libs.slf4j.simple)
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.javalin.testtools)
+    testImplementation(libs.mockwebserver)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.test {

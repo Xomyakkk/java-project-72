@@ -1,0 +1,33 @@
+[versions]
+shadow = "9.4.1"
+sonarqube = "7.3.0.8198"
+javalin = "7.2.2"
+jte = "3.2.4"
+hikari = "5.1.0"
+h2 = "2.3.232"
+postgresql = "42.7.5"
+unirest = "4.5.1"
+jsoup = "1.18.3"
+slf4j = "2.0.18"
+junit = "6.0.0"
+mockwebserver = "4.12.0"
+
+[libraries]
+javalin = { module = "io.javalin:javalin", version.ref = "javalin" }
+javalin-rendering-jte = { module = "io.javalin:javalin-rendering-jte", version.ref = "javalin" }
+jte = { module = "gg.jte:jte", version.ref = "jte" }
+hikari = { module = "com.zaxxer:HikariCP", version.ref = "hikari" }
+h2 = { module = "com.h2database:h2", version.ref = "h2" }
+postgresql = { module = "org.postgresql:postgresql", version.ref = "postgresql" }
+unirest-core = { module = "com.konghq:unirest-java-core", version.ref = "unirest" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+javalin-testtools = { module = "io.javalin:javalin-testtools", version.ref = "javalin" }
+mockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "mockwebserver" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
