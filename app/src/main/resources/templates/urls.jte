@@ -24,7 +24,7 @@
                         <tr>
                             <td>${url.getId()}</td>
                             <td><a href="/urls/${url.getId()}">${url.getName()}</a></td>
-                            <td>${url.getCreatedAt().toLocalDateTime().toLocalDate()}</td>
+                            <td>${url.getCreatedAt().toLocalDateTime().toLocalDate().toString()}</td>
                             <td>-</td>
                         </tr>
                     @endfor

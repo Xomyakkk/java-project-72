@@ -28,6 +28,7 @@ dependencies {
     implementation("org.slf4j:slf4j-simple:2.0.18")
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("io.javalin:javalin-testtools:7.2.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

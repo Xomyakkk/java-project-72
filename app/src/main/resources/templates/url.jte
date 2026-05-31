@@ -21,7 +21,7 @@
                     </tr>
                     <tr>
                         <td class="fw-semibold">Дата создания</td>
-                        <td>${url.getCreatedAt().toLocalDateTime().toLocalDate()}</td>
+                        <td>${url.getCreatedAt().toLocalDateTime().toLocalDate().toString()}</td>
                     </tr>
                 </tbody>
             </table>
