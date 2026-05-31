@@ -6,27 +6,21 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
-import kong.unirest.core.HttpResponse;
-import kong.unirest.core.Unirest;
 import hexlet.code.model.Url;
 import hexlet.code.model.UrlCheck;
 import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.repository.UrlRepository;
 import io.javalin.http.Context;
+import kong.unirest.core.HttpResponse;
+import kong.unirest.core.Unirest;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
 public class UrlController {
     private static final String FLASH_KEY = "flash";
     private static final String FLASH_TYPE_KEY = "flashType";
-    private static final Pattern TITLE_PATTERN = Pattern.compile("(?is)<title[^>]*>(.*?)</title>");
-    private static final Pattern H1_PATTERN = Pattern.compile("(?is)<h1\\b[^>]*>(.*?)</h1>");
-    private static final Pattern DESCRIPTION_PATTERN_1 = Pattern.compile(
-            "(?is)<meta\\b[^>]*name=['\"]description['\"][^>]*content=['\"](.*?)['\"][^>]*>"
-    );
-    private static final Pattern DESCRIPTION_PATTERN_2 = Pattern.compile(
-            "(?is)<meta\\b[^>]*content=['\"](.*?)['\"][^>]*name=['\"]description['\"][^>]*>"
-    );
 
     private final UrlRepository repository;
     private final UrlCheckRepository checkRepository;
@@ -64,10 +58,10 @@ public class UrlController {
                 return;
             }
 
-            var body = response.getBody() == null ? "" : response.getBody();
-            var h1 = extractTagContent(body, H1_PATTERN);
-            var title = extractTagContent(body, TITLE_PATTERN);
-            var description = extractDescription(body);
+            var document = Jsoup.parse(response.getBody() == null ? "" : response.getBody());
+            var h1 = extractText(document.selectFirst("h1"));
+            var title = document.title();
+            var description = extractDescription(document);
             checkRepository.save(url.get().getId(), response.getStatus(), h1, title, description);
             redirectWithFlash(ctx, url.get().getId(), "Страница успешно проверена", "success");
         } catch (RuntimeException e) {
@@ -209,30 +203,16 @@ public class UrlController {
         return repository.findById(id);
     }
 
-    private String extractTagContent(String html, Pattern pattern) {
-        var matcher = pattern.matcher(html);
-        if (!matcher.find()) {
+    private String extractText(Element element) {
+        return element == null ? "" : element.text().trim();
+    }
+
+    private String extractDescription(Document document) {
+        var description = document.selectFirst("meta[name=description]");
+        if (description == null) {
             return "";
         }
 
-        return stripTags(matcher.group(1)).trim();
-    }
-
-    private String extractDescription(String html) {
-        var matcher = DESCRIPTION_PATTERN_1.matcher(html);
-        if (matcher.find()) {
-            return matcher.group(1).trim();
-        }
-
-        matcher = DESCRIPTION_PATTERN_2.matcher(html);
-        if (matcher.find()) {
-            return matcher.group(1).trim();
-        }
-
-        return "";
-    }
-
-    private String stripTags(String value) {
-        return value.replaceAll("(?is)<[^>]+>", " ").replaceAll("\\s+", " ");
+        return description.attr("content").trim();
     }
 }

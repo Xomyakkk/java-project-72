@@ -26,6 +26,7 @@ dependencies {
     implementation("com.h2database:h2:2.3.232")
     implementation("org.postgresql:postgresql:42.7.5")
     implementation("com.konghq:unirest-java-core:4.5.1")
+    implementation("org.jsoup:jsoup:1.18.3")
     implementation("org.slf4j:slf4j-simple:2.0.18")
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
