@@ -1,8 +1,10 @@
 @param String url = ""
 @param String flash = null
+@param String flashType = null
 
 @template.layout(
     flash = flash,
+    flashType = flashType,
     content = @`
     <div class="row justify-content-center">
         <div class="col-12 col-md-10 col-lg-8">

@@ -5,16 +5,35 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.regex.Pattern;
 
-import io.javalin.http.Context;
+import kong.unirest.core.HttpResponse;
+import kong.unirest.core.Unirest;
+import hexlet.code.model.Url;
+import hexlet.code.model.UrlCheck;
+import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.repository.UrlRepository;
+import io.javalin.http.Context;
 
 public class UrlController {
     private static final String FLASH_KEY = "flash";
-    private final UrlRepository repository;
+    private static final String FLASH_TYPE_KEY = "flashType";
+    private static final Pattern TITLE_PATTERN = Pattern.compile("(?is)<title[^>]*>(.*?)</title>");
+    private static final Pattern H1_PATTERN = Pattern.compile("(?is)<h1\\b[^>]*>(.*?)</h1>");
+    private static final Pattern DESCRIPTION_PATTERN_1 = Pattern.compile(
+            "(?is)<meta\\b[^>]*name=['\"]description['\"][^>]*content=['\"](.*?)['\"][^>]*>"
+    );
+    private static final Pattern DESCRIPTION_PATTERN_2 = Pattern.compile(
+            "(?is)<meta\\b[^>]*content=['\"](.*?)['\"][^>]*name=['\"]description['\"][^>]*>"
+    );
 
-    public UrlController(UrlRepository repository) {
+    private final UrlRepository repository;
+    private final UrlCheckRepository checkRepository;
+
+    public UrlController(UrlRepository repository, UrlCheckRepository checkRepository) {
         this.repository = repository;
+        this.checkRepository = checkRepository;
     }
 
     public void home(Context ctx) {
@@ -27,18 +46,33 @@ public class UrlController {
 
     public void show(Context ctx) {
         Long id = parseId(ctx.pathParam("id"));
-        if (id == null) {
+        loadUrl(id).ifPresentOrElse(url -> renderUrl(ctx, url), () -> ctx.status(404));
+    }
+
+    public void createCheck(Context ctx) {
+        Long id = parseId(ctx.pathParam("id"));
+        var url = loadUrl(id);
+        if (url.isEmpty()) {
             ctx.status(404);
             return;
         }
 
-        repository.findById(id).ifPresentOrElse(url -> {
-            var model = baseModel(ctx);
-            model.put("url", url);
-            ctx.render("url.jte", model);
-        }, () -> {
-            ctx.status(404);
-        });
+        try {
+            HttpResponse<String> response = Unirest.get(url.get().getName()).asString();
+            if (response.getStatus() >= 400) {
+                redirectWithFlash(ctx, url.get().getId(), "Произошла ошибка при проверке", "danger");
+                return;
+            }
+
+            var body = response.getBody() == null ? "" : response.getBody();
+            var h1 = extractTagContent(body, H1_PATTERN);
+            var title = extractTagContent(body, TITLE_PATTERN);
+            var description = extractDescription(body);
+            checkRepository.save(url.get().getId(), response.getStatus(), h1, title, description);
+            redirectWithFlash(ctx, url.get().getId(), "Страница успешно проверена", "success");
+        } catch (RuntimeException e) {
+            redirectWithFlash(ctx, url.get().getId(), "Произошла ошибка при проверке", "danger");
+        }
     }
 
     public void create(Context ctx) {
@@ -46,39 +80,55 @@ public class UrlController {
         var normalizedUrl = normalizeUrl(rawUrl);
         if (normalizedUrl == null) {
             ctx.status(422);
-            renderIndex(ctx, rawUrl == null ? "" : rawUrl.trim(), "Некорректный URL");
+            renderIndex(ctx, rawUrl == null ? "" : rawUrl.trim(), "Некорректный URL", "danger");
             return;
         }
 
         var existingUrl = repository.findByName(normalizedUrl);
         if (existingUrl.isPresent()) {
             ctx.sessionAttribute(FLASH_KEY, "Страница уже существует");
+            ctx.sessionAttribute(FLASH_TYPE_KEY, "warning");
             ctx.redirect("/urls/" + existingUrl.get().getId());
             return;
         }
 
         var savedUrl = repository.save(normalizedUrl);
         ctx.sessionAttribute(FLASH_KEY, "Страница успешно добавлена");
+        ctx.sessionAttribute(FLASH_TYPE_KEY, "success");
         ctx.redirect("/urls/" + savedUrl.getId());
     }
 
     private void renderIndex(Context ctx, String urlValue) {
-        renderIndex(ctx, urlValue, null);
+        renderIndex(ctx, urlValue, null, null);
     }
 
-    private void renderIndex(Context ctx, String urlValue, String inlineFlash) {
+    private void renderIndex(Context ctx, String urlValue, String inlineFlash, String inlineFlashType) {
         var model = baseModel(ctx);
         model.put("url", urlValue);
         if (inlineFlash != null) {
             model.put(FLASH_KEY, inlineFlash);
+            model.put(FLASH_TYPE_KEY, inlineFlashType);
         }
         ctx.render("index.jte", model);
     }
 
     private void renderUrls(Context ctx) {
         var model = baseModel(ctx);
-        model.put("urls", repository.findAll());
+        var urls = repository.findAll();
+        var latestChecks = new HashMap<Long, UrlCheck>();
+        for (Url url : urls) {
+            checkRepository.findLatestByUrlId(url.getId()).ifPresent(check -> latestChecks.put(url.getId(), check));
+        }
+        model.put("urls", urls);
+        model.put("latestChecks", latestChecks);
         ctx.render("urls.jte", model);
+    }
+
+    private void renderUrl(Context ctx, Url url) {
+        var model = baseModel(ctx);
+        model.put("url", url);
+        model.put("checks", checkRepository.findByUrlId(url.getId()));
+        ctx.render("url.jte", model);
     }
 
     private Map<String, Object> baseModel(Context ctx) {
@@ -86,6 +136,10 @@ public class UrlController {
         var flash = consumeFlash(ctx);
         if (flash != null) {
             model.put(FLASH_KEY, flash);
+            var flashType = consumeFlashType(ctx);
+            if (flashType != null) {
+                model.put(FLASH_TYPE_KEY, flashType);
+            }
         }
         return model;
     }
@@ -96,6 +150,14 @@ public class UrlController {
             ctx.sessionAttribute(FLASH_KEY, (String) null);
         }
         return flash;
+    }
+
+    private String consumeFlashType(Context ctx) {
+        String flashType = ctx.sessionAttribute(FLASH_TYPE_KEY);
+        if (flashType != null) {
+            ctx.sessionAttribute(FLASH_TYPE_KEY, (String) null);
+        }
+        return flashType;
     }
 
     private Long parseId(String rawId) {
@@ -131,5 +193,46 @@ public class UrlController {
         } catch (IllegalArgumentException | MalformedURLException e) {
             return null;
         }
+    }
+
+    private void redirectWithFlash(Context ctx, Long id, String message, String flashType) {
+        ctx.sessionAttribute(FLASH_KEY, message);
+        ctx.sessionAttribute(FLASH_TYPE_KEY, flashType);
+        ctx.redirect("/urls/" + id);
+    }
+
+    private Optional<Url> loadUrl(Long id) {
+        if (id == null) {
+            return Optional.empty();
+        }
+
+        return repository.findById(id);
+    }
+
+    private String extractTagContent(String html, Pattern pattern) {
+        var matcher = pattern.matcher(html);
+        if (!matcher.find()) {
+            return "";
+        }
+
+        return stripTags(matcher.group(1)).trim();
+    }
+
+    private String extractDescription(String html) {
+        var matcher = DESCRIPTION_PATTERN_1.matcher(html);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+
+        matcher = DESCRIPTION_PATTERN_2.matcher(html);
+        if (matcher.find()) {
+            return matcher.group(1).trim();
+        }
+
+        return "";
+    }
+
+    private String stripTags(String value) {
+        return value.replaceAll("(?is)<[^>]+>", " ").replaceAll("\\s+", " ");
     }
 }

@@ -25,10 +25,12 @@ dependencies {
     implementation("com.zaxxer:HikariCP:5.1.0")
     implementation("com.h2database:h2:2.3.232")
     implementation("org.postgresql:postgresql:42.7.5")
+    implementation("com.konghq:unirest-java-core:4.5.1")
     implementation("org.slf4j:slf4j-simple:2.0.18")
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("io.javalin:javalin-testtools:7.2.2")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

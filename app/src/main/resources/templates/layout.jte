@@ -2,6 +2,7 @@
 
 @param Content content
 @param String flash = null
+@param String flashType = null
 @param Content footer = null
 
 <!doctype html>
@@ -24,7 +25,7 @@
 
 <main class="container flex-grow-1 py-5">
     @if (flash != null)
-        <div class="alert alert-info mb-4" role="alert">
+        <div class="alert alert-${flashType != null ? flashType : "info"} mb-4" role="alert">
             ${flash}
         </div>
     @endif

@@ -2,6 +2,7 @@ package hexlet.code;
 
 import hexlet.code.util.Database;
 import hexlet.code.controller.UrlController;
+import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.repository.UrlRepository;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
@@ -20,7 +21,8 @@ public class App {
 
     public static Javalin getApp() {
         var urlRepository = new UrlRepository();
-        var urlController = new UrlController(urlRepository);
+        var urlCheckRepository = new UrlCheckRepository();
+        var urlController = new UrlController(urlRepository, urlCheckRepository);
         return Javalin.create(config -> {
             config.bundledPlugins.enableDevLogging();
             config.fileRenderer(new JavalinJte(createTemplateEngine()));
@@ -29,6 +31,7 @@ public class App {
                 get("/urls", urlController::index);
                 post("/urls", urlController::create);
                 get("/urls/{id}", urlController::show);
+                post("/urls/{id}/checks", urlController::createCheck);
             });
         });
     }
