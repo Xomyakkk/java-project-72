@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.function.Function;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -27,7 +28,7 @@ public final class Database {
     }
 
     private static HikariDataSource createDataSource() {
-        var settings = resolveConnectionSettings();
+        var settings = resolveConnectionSettings(System.getenv("JDBC_DATABASE_URL"), System.getenv("DATABASE_URL"));
         var config = new HikariConfig();
         config.setJdbcUrl(settings.jdbcUrl());
         if (settings.username() != null) {
@@ -47,17 +48,17 @@ public final class Database {
         return dataSource;
     }
 
-    private static ConnectionSettings resolveConnectionSettings() {
-        var url = System.getenv("JDBC_DATABASE_URL");
+    static ConnectionSettings resolveConnectionSettings(String jdbcDatabaseUrl, String databaseUrl) {
+        var url = jdbcDatabaseUrl;
         if (url == null || url.isBlank()) {
-            url = System.getenv("DATABASE_URL");
+            url = databaseUrl;
         }
 
         if (url == null || url.isBlank()) {
             return new ConnectionSettings(DEFAULT_H2_URL, "sa", "");
         }
 
-        url = expandEnvVariables(url);
+        url = expandEnvVariables(url, System::getenv);
         url = stripQuotes(url);
 
         if (url.startsWith("jdbc:")) {
@@ -71,12 +72,12 @@ public final class Database {
         return new ConnectionSettings(url, null, null);
     }
 
-    private static String expandEnvVariables(String value) {
+    static String expandEnvVariables(String value, Function<String, String> envLookup) {
         var matcher = ENV_PATTERN.matcher(value);
         var buffer = new StringBuffer();
 
         while (matcher.find()) {
-            var envValue = System.getenv(matcher.group(1));
+            var envValue = envLookup.apply(matcher.group(1));
             if (envValue == null) {
                 envValue = "";
             }
@@ -87,7 +88,7 @@ public final class Database {
         return buffer.toString();
     }
 
-    private static String stripQuotes(String value) {
+    static String stripQuotes(String value) {
         if (value.length() >= 2
                 && ((value.startsWith("\"") && value.endsWith("\""))
                 || (value.startsWith("'") && value.endsWith("'")))) {
@@ -127,7 +128,7 @@ public final class Database {
         return new ConnectionSettings(jdbcUrl.toString(), username, password);
     }
 
-    private static boolean needsDefaultH2Credentials(ConnectionSettings settings) {
+    static boolean needsDefaultH2Credentials(ConnectionSettings settings) {
         return settings.jdbcUrl().startsWith("jdbc:h2:")
                 && settings.username() == null
                 && settings.password() == null;
@@ -150,6 +151,6 @@ public final class Database {
         }
     }
 
-    private record ConnectionSettings(String jdbcUrl, String username, String password) {
+    record ConnectionSettings(String jdbcUrl, String username, String password) {
     }
 }

@@ -50,8 +50,7 @@ public class App {
         return TemplateEngine.create(codeResolver, ContentType.Html);
     }
 
-    private static int getPort() {
-        var port = System.getenv("PORT");
+    static int getPort(String port) {
         if (port == null || port.isBlank()) {
             return DEFAULT_PORT;
         }
@@ -62,5 +61,9 @@ public class App {
             LOGGER.warn("Invalid PORT value '{}', using default {}", port, DEFAULT_PORT);
             return DEFAULT_PORT;
         }
+    }
+
+    private static int getPort() {
+        return getPort(System.getenv("PORT"));
     }
 }
