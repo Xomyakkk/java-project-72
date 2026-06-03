@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.sql.Timestamp;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,13 @@ class UtilsCoverageTest {
 
         var longValue = "x".repeat(201);
         assertEquals("x".repeat(200) + "...", TextUtils.truncate(longValue));
+    }
+
+    @Test
+    void formatTimestampShowsDateAndTime() {
+        var timestamp = Timestamp.valueOf("2026-06-03 14:25:00");
+
+        assertEquals("03.06.2026 14:25", DateTimeUtils.format(timestamp));
     }
 
     @Test

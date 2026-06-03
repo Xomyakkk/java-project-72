@@ -2,6 +2,7 @@
 @import java.util.Map
 @import hexlet.code.model.Url
 @import hexlet.code.model.UrlCheck
+@import hexlet.code.util.DateTimeUtils
 
 @param List<Url> urls
 @param Map<Long, UrlCheck> latestChecks
@@ -27,7 +28,7 @@
                 <tr>
                     <td>${url.getId()}</td>
                     <td><a href="/urls/${url.getId()}">${url.getName()}</a></td>
-                    <td>${url.getCreatedAt().toLocalDateTime().toLocalDate().toString()}</td>
+                    <td>${DateTimeUtils.format(url.getCreatedAt())}</td>
                     <td>
                         @if (latestChecks.get(url.getId()) != null)
                             ${latestChecks.get(url.getId()).getStatusCode()}

@@ -10,6 +10,7 @@ import java.sql.Statement;
 import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.repository.UrlRepository;
 import hexlet.code.util.Database;
+import hexlet.code.util.DateTimeUtils;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import okhttp3.mockwebserver.MockResponse;
@@ -71,7 +72,7 @@ public class AppTest {
             assertTrue(body.contains("https://example.com"));
             assertTrue(body.contains("data-test=\"url\""));
             assertTrue(body.contains("data-test=\"checks\""));
-            assertTrue(body.contains(url.getCreatedAt().toLocalDateTime().toLocalDate().toString()));
+            assertTrue(body.contains(DateTimeUtils.format(url.getCreatedAt())));
         });
     }
 
@@ -226,7 +227,7 @@ public class AppTest {
                 var body = urlsPage.body().string();
                 assertTrue(body.contains("data-test=\"urls\""));
                 assertTrue(body.contains(String.valueOf(check.getStatusCode())));
-                assertTrue(body.contains(check.getCreatedAt().toLocalDateTime().toLocalDate().toString()));
+                assertTrue(body.contains(DateTimeUtils.format(check.getCreatedAt())));
             });
         }
     }
