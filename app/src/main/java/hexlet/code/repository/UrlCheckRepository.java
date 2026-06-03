@@ -8,7 +8,9 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.zaxxer.hikari.HikariDataSource;
@@ -66,6 +68,41 @@ public class UrlCheckRepository extends BaseRepository {
             return Optional.empty();
         } catch (SQLException e) {
             throw new IllegalStateException("Unable to load latest URL check", e);
+        }
+    }
+
+    public Map<Long, UrlCheck> findLatestChecks() {
+        var sql = """
+            SELECT id, url_id, status_code, h1, title, description, created_at
+            FROM (
+                SELECT
+                    id,
+                    url_id,
+                    status_code,
+                    h1,
+                    title,
+                    description,
+                    created_at,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY url_id
+                        ORDER BY created_at DESC, id DESC
+                    ) AS rn
+                FROM url_checks
+            ) AS ranked_checks
+            WHERE rn = 1
+            """;
+
+        try (Connection connection = getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+            var latestChecks = new HashMap<Long, UrlCheck>();
+            while (resultSet.next()) {
+                var check = map(resultSet);
+                latestChecks.put(check.getUrlId(), check);
+            }
+            return latestChecks;
+        } catch (SQLException e) {
+            throw new IllegalStateException("Unable to load latest URL checks", e);
         }
     }
 

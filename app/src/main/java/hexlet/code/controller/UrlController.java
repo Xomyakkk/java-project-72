@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import hexlet.code.model.Url;
-import hexlet.code.model.UrlCheck;
 import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.repository.UrlRepository;
 import io.javalin.http.Context;
@@ -109,10 +108,7 @@ public class UrlController {
     private void renderUrls(Context ctx) {
         var model = baseModel(ctx);
         var urls = repository.findAll();
-        var latestChecks = new HashMap<Long, UrlCheck>();
-        for (Url url : urls) {
-            checkRepository.findLatestByUrlId(url.getId()).ifPresent(check -> latestChecks.put(url.getId(), check));
-        }
+        var latestChecks = checkRepository.findLatestChecks();
         model.put("urls", urls);
         model.put("latestChecks", latestChecks);
         ctx.render("urls.jte", model);
