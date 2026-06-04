@@ -1,6 +1,5 @@
 package hexlet.code.controller;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Locale;
@@ -53,7 +52,7 @@ public class UrlController {
         try {
             HttpResponse<String> response = Unirest.get(url.get().getName()).asString();
             if (response.getStatus() >= 400) {
-                redirectWithFlash(ctx, url.get().getId(), "Произошла ошибка при проверке", "danger");
+                redirectWithFlash(ctx, url.get().getId(), "РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР° РїСЂРё РїСЂРѕРІРµСЂРєРµ", "danger");
                 return;
             }
 
@@ -62,31 +61,41 @@ public class UrlController {
             var title = document.title();
             var description = extractDescription(document);
             checkRepository.save(url.get().getId(), response.getStatus(), h1, title, description);
-            redirectWithFlash(ctx, url.get().getId(), "Страница успешно проверена", "success");
+            redirectWithFlash(ctx, url.get().getId(), "РЎС‚СЂР°РЅРёС†Р° СѓСЃРїРµС€РЅРѕ РїСЂРѕРІРµСЂРµРЅР°", "success");
         } catch (RuntimeException e) {
-            redirectWithFlash(ctx, url.get().getId(), "Произошла ошибка при проверке", "danger");
+            redirectWithFlash(ctx, url.get().getId(), "РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР° РїСЂРё РїСЂРѕРІРµСЂРєРµ", "danger");
         }
     }
 
     public void create(Context ctx) {
         var rawUrl = ctx.formParam("url");
-        var normalizedUrl = normalizeUrl(rawUrl);
-        if (normalizedUrl == null) {
-            ctx.status(422);
-            renderIndex(ctx, rawUrl == null ? "" : rawUrl.trim(), "Некорректный URL", "danger");
+
+        URI parsedUrl;
+        try {
+            parsedUrl = parseUrl(rawUrl);
+        } catch (IllegalArgumentException e) {
+            renderInvalidUrl(ctx, rawUrl);
+            return;
+        }
+
+        String normalizedUrl;
+        try {
+            normalizedUrl = normalizeUrl(parsedUrl);
+        } catch (IllegalArgumentException e) {
+            renderInvalidUrl(ctx, rawUrl);
             return;
         }
 
         var existingUrl = repository.findByName(normalizedUrl);
         if (existingUrl.isPresent()) {
-            ctx.sessionAttribute(FLASH_KEY, "Страница уже существует");
+            ctx.sessionAttribute(FLASH_KEY, "РЎС‚СЂР°РЅРёС†Р° СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
             ctx.sessionAttribute(FLASH_TYPE_KEY, "warning");
             ctx.redirect("/urls/" + existingUrl.get().getId());
             return;
         }
 
         var savedUrl = repository.save(normalizedUrl);
-        ctx.sessionAttribute(FLASH_KEY, "Страница успешно добавлена");
+        ctx.sessionAttribute(FLASH_KEY, "РЎС‚СЂР°РЅРёС†Р° СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅР°");
         ctx.sessionAttribute(FLASH_TYPE_KEY, "success");
         ctx.redirect("/urls/" + savedUrl.getId());
     }
@@ -158,31 +167,40 @@ public class UrlController {
         }
     }
 
-    private String normalizeUrl(String rawUrl) {
+    private URI parseUrl(String rawUrl) {
         if (rawUrl == null || rawUrl.isBlank()) {
-            return null;
+            throw new IllegalArgumentException("URL cannot be blank");
         }
 
         try {
-            var url = URI.create(rawUrl.trim()).toURL();
-            var host = url.getHost();
-            if (host == null || host.isBlank()) {
-                return null;
-            }
-
-            var normalized = new StringBuilder()
-                    .append(url.getProtocol())
-                    .append("://")
-                    .append(host.toLowerCase(Locale.ROOT));
-
-            if (url.getPort() != -1) {
-                normalized.append(":").append(url.getPort());
-            }
-
-            return normalized.toString();
-        } catch (IllegalArgumentException | MalformedURLException e) {
-            return null;
+            return URI.create(rawUrl.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid URL", e);
         }
+    }
+
+    private String normalizeUrl(URI parsedUrl) {
+        var scheme = parsedUrl.getScheme();
+        var host = parsedUrl.getHost();
+        if (scheme == null || scheme.isBlank() || host == null || host.isBlank()) {
+            throw new IllegalArgumentException("Invalid URL");
+        }
+
+        var normalized = new StringBuilder()
+                .append(scheme)
+                .append("://")
+                .append(host.toLowerCase(Locale.ROOT));
+
+        if (parsedUrl.getPort() != -1) {
+            normalized.append(":").append(parsedUrl.getPort());
+        }
+
+        return normalized.toString();
+    }
+
+    private void renderInvalidUrl(Context ctx, String rawUrl) {
+        ctx.status(422);
+        renderIndex(ctx, rawUrl == null ? "" : rawUrl.trim(), "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ URL", "danger");
     }
 
     private void redirectWithFlash(Context ctx, Long id, String message, String flashType) {
