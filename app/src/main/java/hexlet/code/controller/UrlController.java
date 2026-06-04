@@ -186,8 +186,13 @@ public class UrlController {
             throw new IllegalArgumentException("Invalid URL");
         }
 
+        var normalizedScheme = scheme.toLowerCase(Locale.ROOT);
+        if (!normalizedScheme.equals("http") && !normalizedScheme.equals("https")) {
+            throw new IllegalArgumentException("Invalid URL");
+        }
+
         var normalized = new StringBuilder()
-                .append(scheme)
+                .append(normalizedScheme)
                 .append("://")
                 .append(host.toLowerCase(Locale.ROOT));
 
