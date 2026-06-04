@@ -126,15 +126,16 @@ public class UrlCheckRepository extends BaseRepository {
 
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    return new UrlCheck(
+                    var urlCheck = new UrlCheck(
                             generatedKeys.getLong(1),
                             urlId,
                             statusCode,
                             h1,
                             title,
-                            description,
-                            createdAt
+                            description
                     );
+                    urlCheck.setCreatedAt(createdAt.toLocalDateTime());
+                    return urlCheck;
                 }
             }
 
@@ -145,14 +146,15 @@ public class UrlCheckRepository extends BaseRepository {
     }
 
     private UrlCheck map(ResultSet resultSet) throws SQLException {
-        return new UrlCheck(
+        var urlCheck = new UrlCheck(
                 resultSet.getLong("id"),
                 resultSet.getLong("url_id"),
                 resultSet.getInt("status_code"),
                 resultSet.getString("h1"),
                 resultSet.getString("title"),
-                resultSet.getString("description"),
-                resultSet.getTimestamp("created_at")
+                resultSet.getString("description")
         );
+        urlCheck.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+        return urlCheck;
     }
 }

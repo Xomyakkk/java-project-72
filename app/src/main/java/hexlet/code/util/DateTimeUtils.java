@@ -1,6 +1,6 @@
 package hexlet.code.util;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 
@@ -11,11 +11,11 @@ public final class DateTimeUtils {
     private DateTimeUtils() {
     }
 
-    public static String format(Timestamp timestamp) {
-        if (timestamp == null) {
+    public static String format(LocalDateTime dateTime) {
+        if (dateTime == null) {
             return "";
         }
 
-        return timestamp.toLocalDateTime().format(FORMATTER);
+        return dateTime.format(FORMATTER);
     }
 }

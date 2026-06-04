@@ -13,8 +13,6 @@ import io.javalin.http.Context;
 import kong.unirest.core.HttpResponse;
 import kong.unirest.core.Unirest;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
 public class UrlController {
     private static final String FLASH_KEY = "flash";
@@ -52,18 +50,20 @@ public class UrlController {
         try {
             HttpResponse<String> response = Unirest.get(url.get().getName()).asString();
             if (response.getStatus() >= 400) {
-                redirectWithFlash(ctx, url.get().getId(), "РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР° РїСЂРё РїСЂРѕРІРµСЂРєРµ", "danger");
+                redirectWithFlash(ctx, url.get().getId(), "Произошла ошибка при проверке", "danger");
                 return;
             }
 
             var document = Jsoup.parse(response.getBody() == null ? "" : response.getBody());
-            var h1 = extractText(document.selectFirst("h1"));
+            var h1Element = document.selectFirst("h1");
+            var h1 = h1Element == null ? "" : h1Element.text().trim();
             var title = document.title();
-            var description = extractDescription(document);
+            var descriptionElement = document.selectFirst("meta[name=description]");
+            var description = descriptionElement == null ? "" : descriptionElement.attr("content").trim();
             checkRepository.save(url.get().getId(), response.getStatus(), h1, title, description);
-            redirectWithFlash(ctx, url.get().getId(), "РЎС‚СЂР°РЅРёС†Р° СѓСЃРїРµС€РЅРѕ РїСЂРѕРІРµСЂРµРЅР°", "success");
+            redirectWithFlash(ctx, url.get().getId(), "Страница успешно проверена", "success");
         } catch (RuntimeException e) {
-            redirectWithFlash(ctx, url.get().getId(), "РџСЂРѕРёР·РѕС€Р»Р° РѕС€РёР±РєР° РїСЂРё РїСЂРѕРІРµСЂРєРµ", "danger");
+            redirectWithFlash(ctx, url.get().getId(), "Произошла ошибка при проверке", "danger");
         }
     }
 
@@ -88,14 +88,14 @@ public class UrlController {
 
         var existingUrl = repository.findByName(normalizedUrl);
         if (existingUrl.isPresent()) {
-            ctx.sessionAttribute(FLASH_KEY, "РЎС‚СЂР°РЅРёС†Р° СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
+            ctx.sessionAttribute(FLASH_KEY, "Страница уже существует");
             ctx.sessionAttribute(FLASH_TYPE_KEY, "warning");
             ctx.redirect("/urls/" + existingUrl.get().getId());
             return;
         }
 
         var savedUrl = repository.save(normalizedUrl);
-        ctx.sessionAttribute(FLASH_KEY, "РЎС‚СЂР°РЅРёС†Р° СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅР°");
+        ctx.sessionAttribute(FLASH_KEY, "Страница успешно добавлена");
         ctx.sessionAttribute(FLASH_TYPE_KEY, "success");
         ctx.redirect("/urls/" + savedUrl.getId());
     }
@@ -200,7 +200,7 @@ public class UrlController {
 
     private void renderInvalidUrl(Context ctx, String rawUrl) {
         ctx.status(422);
-        renderIndex(ctx, rawUrl == null ? "" : rawUrl.trim(), "РќРµРєРѕСЂСЂРµРєС‚РЅС‹Р№ URL", "danger");
+        renderIndex(ctx, rawUrl == null ? "" : rawUrl.trim(), "Некорректный URL", "danger");
     }
 
     private void redirectWithFlash(Context ctx, Long id, String message, String flashType) {
@@ -215,18 +215,5 @@ public class UrlController {
         }
 
         return repository.findById(id);
-    }
-
-    private String extractText(Element element) {
-        return element == null ? "" : element.text().trim();
-    }
-
-    private String extractDescription(Document document) {
-        var description = document.selectFirst("meta[name=description]");
-        if (description == null) {
-            return "";
-        }
-
-        return description.attr("content").trim();
     }
 }

@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -21,9 +21,9 @@ class UtilsCoverageTest {
 
     @Test
     void formatTimestampShowsDateAndTime() {
-        var timestamp = Timestamp.valueOf("2026-06-03 14:25:00");
+        var dateTime = LocalDateTime.of(2026, 6, 3, 14, 25);
 
-        assertEquals("03.06.2026 14:25", DateTimeUtils.format(timestamp));
+        assertEquals("03.06.2026 14:25", DateTimeUtils.format(dateTime));
     }
 
     @Test

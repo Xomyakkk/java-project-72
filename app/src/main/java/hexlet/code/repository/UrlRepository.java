@@ -101,7 +101,9 @@ public class UrlRepository extends BaseRepository {
 
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
-                    return new Url(generatedKeys.getLong(1), name, createdAt);
+                    var url = new Url(generatedKeys.getLong(1), name);
+                    url.setCreatedAt(createdAt.toLocalDateTime());
+                    return url;
                 }
             }
 
@@ -112,10 +114,11 @@ public class UrlRepository extends BaseRepository {
     }
 
     private Url map(ResultSet resultSet) throws SQLException {
-        return new Url(
+        var url = new Url(
                 resultSet.getLong("id"),
-                resultSet.getString("name"),
-                resultSet.getTimestamp("created_at")
+                resultSet.getString("name")
         );
+        url.setCreatedAt(resultSet.getTimestamp("created_at").toLocalDateTime());
+        return url;
     }
 }
