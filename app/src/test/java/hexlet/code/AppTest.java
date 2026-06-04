@@ -171,7 +171,9 @@ public class AppTest {
                 var check = urlCheckRepository.findLatestByUrlId(saved.getId());
                 assertTrue(check.isPresent());
                 assertEquals(200, check.get().getStatusCode());
-                assertTrue(check.get().getDescription().length() > 200);
+                assertEquals("Do not expect a miracle, miracles yourself!", check.get().getH1());
+                assertEquals("Awesome page", check.get().getTitle());
+                assertEquals("x".repeat(230), check.get().getDescription());
             });
         }
     }
