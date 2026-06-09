@@ -88,6 +88,7 @@ org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.10=testCompileClasspath,testRuntimeC
 org.jetbrains.kotlin:kotlin-stdlib:2.2.20=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.jetbrains:annotations:13.0=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.jsoup:jsoup:1.18.3=compileClasspath,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
+org.projectlombok:lombok:1.18.42=annotationProcessor,compileClasspath,testAnnotationProcessor,testCompileClasspath
 org.jspecify:jspecify:1.0.0=checkstyle,testCompileClasspath
 org.junit.jupiter:junit-jupiter-api:6.0.0=testCompileClasspath,testRuntimeClasspath
 org.junit.jupiter:junit-jupiter-engine:6.0.0=testRuntimeClasspath
