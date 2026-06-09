@@ -228,6 +228,7 @@ public class AppTest {
 
                 var body = urlsPage.body().string();
                 assertTrue(body.contains("data-test=\"urls\""));
+                assertTrue(body.contains("\u0414\u0430\u0442\u0430 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0435\u0439 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438"));
                 assertTrue(body.contains(String.valueOf(check.getStatusCode())));
                 assertTrue(body.contains(DateTimeUtils.format(check.getCreatedAt())));
             });

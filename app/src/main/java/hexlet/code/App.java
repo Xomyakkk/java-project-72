@@ -9,15 +9,14 @@ import gg.jte.TemplateEngine;
 import gg.jte.resolve.ResourceCodeResolver;
 import io.javalin.Javalin;
 import io.javalin.rendering.template.JavalinJte;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.javalin.apibuilder.ApiBuilder.get;
 import static io.javalin.apibuilder.ApiBuilder.post;
 
+@Slf4j
 public class App {
     private static final int DEFAULT_PORT = 7070;
-    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     public static Javalin getApp() {
         var urlRepository = new UrlRepository();
@@ -40,7 +39,7 @@ public class App {
         var port = getPort();
         Database.getDataSource();
         var app = getApp();
-        LOGGER.info("Starting application on port {}", port);
+        log.info("Starting application on port {}", port);
         app.start(port);
     }
 
@@ -58,7 +57,7 @@ public class App {
         try {
             return Integer.parseInt(port);
         } catch (NumberFormatException e) {
-            LOGGER.warn("Invalid PORT value '{}', using default {}", port, DEFAULT_PORT);
+            log.warn("Invalid PORT value '{}', using default {}", port, DEFAULT_PORT);
             return DEFAULT_PORT;
         }
     }

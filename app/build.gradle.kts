@@ -18,6 +18,8 @@ repositories {
 }
 
 dependencies {
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
     implementation(libs.javalin)
     implementation(libs.javalin.rendering.jte)
     implementation(libs.jte)

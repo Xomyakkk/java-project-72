@@ -4,12 +4,13 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 import hexlet.code.model.Url;
 import hexlet.code.repository.UrlCheckRepository;
 import hexlet.code.repository.UrlRepository;
 import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
+import io.javalin.http.NotFoundResponse;
 import kong.unirest.core.HttpResponse;
 import kong.unirest.core.Unirest;
 import org.jsoup.Jsoup;
@@ -35,15 +36,21 @@ public class UrlController {
     }
 
     public void show(Context ctx) {
-        Long id = parseId(ctx.pathParam("id"));
-        loadUrl(id).ifPresentOrElse(url -> renderUrl(ctx, url), () -> ctx.status(404));
+        Long id = ctx.pathParamAsClass("id", Long.class)
+                .getOrThrow(error -> new NotFoundResponse());
+
+        repository.findById(id).ifPresentOrElse(
+                url -> renderUrl(ctx, url),
+                () -> ctx.status(HttpStatus.NOT_FOUND)
+        );
     }
 
     public void createCheck(Context ctx) {
-        Long id = parseId(ctx.pathParam("id"));
-        var url = loadUrl(id);
+        Long id = ctx.pathParamAsClass("id", Long.class)
+                .getOrThrow(error -> new NotFoundResponse());
+        var url = repository.findById(id);
         if (url.isEmpty()) {
-            ctx.status(404);
+            ctx.status(HttpStatus.NOT_FOUND);
             return;
         }
 
@@ -69,18 +76,14 @@ public class UrlController {
 
     public void create(Context ctx) {
         var rawUrl = ctx.formParam("url");
-
-        URI parsedUrl;
-        try {
-            parsedUrl = parseUrl(rawUrl);
-        } catch (IllegalArgumentException e) {
+        if (rawUrl == null || rawUrl.isBlank()) {
             renderInvalidUrl(ctx, rawUrl);
             return;
         }
 
         String normalizedUrl;
         try {
-            normalizedUrl = normalizeUrl(parsedUrl);
+            normalizedUrl = normalizeUrl(URI.create(rawUrl.trim()));
         } catch (IllegalArgumentException e) {
             renderInvalidUrl(ctx, rawUrl);
             return;
@@ -159,26 +162,6 @@ public class UrlController {
         return flashType;
     }
 
-    private Long parseId(String rawId) {
-        try {
-            return Long.parseLong(rawId);
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private URI parseUrl(String rawUrl) {
-        if (rawUrl == null || rawUrl.isBlank()) {
-            throw new IllegalArgumentException("URL cannot be blank");
-        }
-
-        try {
-            return URI.create(rawUrl.trim());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid URL", e);
-        }
-    }
-
     private String normalizeUrl(URI parsedUrl) {
         var scheme = parsedUrl.getScheme();
         var host = parsedUrl.getHost();
@@ -204,7 +187,7 @@ public class UrlController {
     }
 
     private void renderInvalidUrl(Context ctx, String rawUrl) {
-        ctx.status(422);
+        ctx.status(HttpStatus.UNPROCESSABLE_CONTENT);
         renderIndex(ctx, rawUrl == null ? "" : rawUrl.trim(), "Некорректный URL", "danger");
     }
 
@@ -212,13 +195,5 @@ public class UrlController {
         ctx.sessionAttribute(FLASH_KEY, message);
         ctx.sessionAttribute(FLASH_TYPE_KEY, flashType);
         ctx.redirect("/urls/" + id);
-    }
-
-    private Optional<Url> loadUrl(Long id) {
-        if (id == null) {
-            return Optional.empty();
-        }
-
-        return repository.findById(id);
     }
 }
